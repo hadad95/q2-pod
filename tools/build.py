@@ -719,6 +719,9 @@ LDAC_HQ = ((0x4faa5c, 0x00042080, 0x00041880),   # sll $3,$4,2
 # check_mem_thd (platform_init's detached thread) returns NULL on entry: it never opens drop_caches,
 # writes 3 to it or wakes each second. lui/addiu $gp -> jr $ra; move $v0,$zero.
 DROP_CACHES = ((0x51cd00, 0x3c1c0052, 0x03e00008), (0x51cd04, 0x279cdde0, 0x00001025))
+# setstandby_time's Standby countdown, in check_to_poweroption's one-second ticks: 30 s, not
+# stock's 300 (5 minutes). li $2,0x12c -> li $2,0x1e.
+STANDBY_TIME = (0x4feaf4, 0x2402012c, 0x2402001e)
 # Stock V1.36's main loop starts a thread of its own on /dev/input/event4, BlueZ's AVRCP keys, and posts Play and Pause
 # alike as the Play button, Next and Previous as the skip buttons. patch/headset.c's worker reads that device already,
 # and tells Play from Pause, holds a connecting headset's Play for Resume on Connect and sends the keys to the player
@@ -2238,6 +2241,7 @@ def build(zip_path, out, logo, dev=False, repo=REPO, stock_flac=False):  # pragm
     patch_word(patched, *SCAN_DIRS, jal(ps['ringnav_scan_dir']), 'the library scan skips hidden folders')
     for address, old, new in DROP_CACHES:
         patch_word(patched, address, old, new, 'keep the page cache')
+    patch_word(patched, *STANDBY_TIME, 'Standby after 30 s, not 5 minutes')
     for address, old, new in BT_INPUT:
         patch_word(patched, address, old, new, "a headset's keys are read once, by the headset worker")
     for address, name in STREAM_POLL_CALLS:
